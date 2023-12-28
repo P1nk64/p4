@@ -533,13 +533,6 @@ def q11_fetch_database_new(city_name = None, state = None, page = 0, page_size =
 
 # app = Flask(__name__)
 
-
-@app.route("/", methods=['GET'])
-def index():
-    return render_template(
-        'index.html'
-    )
-
 @app.route('/stat/closest_cities', methods=['GET'])
 def closest_cities():
     # 获取查询参数
@@ -604,7 +597,7 @@ def q11_closest_cities_new():
     state = request.args.get('state', default="")
     return q11_fetch_database_new(city_name=city, state=state)
 
-@app.route("/new", methods=['GET'])
+@app.route("/", methods=['GET'])
 def index_new():
     return render_template(
         'index_new.html'
