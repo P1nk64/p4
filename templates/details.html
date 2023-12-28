@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Details Page</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <h1>Details</h1>
+    <h2>Question 13</h2>
+    <div>
+        <p><strong>Center City:</strong> {{ data.center_city }}</p>
+        <p><strong>Number of Cities:</strong> {{ data.num_cities }}</p>
+        <p><strong>State:</strong> {{ data.state }}</p>
+        <p><strong>Total Population:</strong> {{ data.total_population }}</p>
+        <p><strong>Weighted Average Score:</strong> {{ data.weighted_avg_score }}</p>
+        <h2>Top Words Radar Chart</h2>
+        <canvas id="radarChart" width="100" height="100"></canvas>
+{#        <ul>#}
+{#            {% for word in data.top_words %}#}
+{#                <li>{{ word.term }} (Popularity: {{ word.popularity }})</li>#}
+{#            {% endfor %}#}
+{#        </ul>#}
+    </div>
+    <script>
+        // 假设你已经以某种方式将 detailData 数据嵌入到了页面中
+        // 下面是一个示例数据结构
+        var detailData = {
+    top_words: {{ data.top_words | tojson | safe }}
+};
+
+        // 当文档加载完毕时绘制雷达图
+        document.addEventListener('DOMContentLoaded', function () {
+            var ctx = document.getElementById('radarChart').getContext('2d');
+            var labels = detailData.top_words.map(function(word) {
+                return word.term;
+            });
+            var data = detailData.top_words.map(function(word) {
+                return word.popularity;
+            });
+
+            var radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Top Words Popularity',
+                        data: data,
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scale: {
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

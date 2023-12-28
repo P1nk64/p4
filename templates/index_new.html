@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Distance and Score</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1> Wang Yu 6001 </h1>
+    <h1> Yang Xiao 5991 </h1>
+    <h2>Question 10 & 11 (Please wait a few minutes for the two charts to appear)</h2>
+    <div>
+        <label for="city">City：</label>
+        <input type="text" id="city" name="city">
+
+        <label for="state">State：</label>
+        <input type="text" id="state" name="state">
+
+        <button onclick="fetchData(); fetchScoreData()">Submit</button>
+    </div>
+
+    <div>
+        <button onclick="previousPage()">Last Page</button>
+        <button onclick="nextPage()">Next Page</button>
+    </div>
+
+    <canvas id="barChart" width="600" height="400"></canvas>
+    <canvas id="lineChart" WIDTH="600" HEIGHT="400"></canvas>
+
+    <div id="responseTime"></div>
+
+    <h2>Question 12 & 13</h2>
+    <label for="num_classes_12">Classes</label>
+    <input type="number" id="num_classes_12" placeholder="classes">
+    <label for="k_12">K</label>
+    <input type="number" id="k_12" placeholder="k">
+    <label for="words_12">Words</label>
+    <input type="number" id="words_12" placeholder="words">
+    <button onclick="fetchData_12()">Fetch Data</button>
+    <div id="result"></div>
+
+    <canvas id="pieChart" width="400" height="400"></canvas>
+    <form id="postForm" action="/details" method="post" style="display: none;">
+    <input type="hidden" id="data" name="data" value="">
+</form>
+
+    <script>
+        let currentPage = 0;
+        let totalData = [];
+        let scoreData = [];
+        const pageSize = 50;
+        let barChart = null;
+        let lineChart = null;
+        let pieChart = null; // 饼图实例
+        const scorePageSize = 10;
+
+        function fetchData() {
+            const city = document.getElementById('city').value;
+            const state = document.getElementById('state').value;
+            const url = `http://127.0.0.1:5000/stat/closest_cities_new?city=${city}&state=${state}`;
+
+            const startTime = performance.now();
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    totalData = data;
+                    const endTime = performance.now();
+                    {#document.getElementById('responseTime').innerText = `Response time：${endTime - startTime} ms`;#}
+
+                    updateBarChart();
+                })
+                .catch(error => console.error('错误:', error));
+        }
+
+        function fetchScoreData() {
+            const city = document.getElementById('city').value;
+            const state = document.getElementById('state').value;
+            const url = `http://127.0.0.1:5000/stat/q11_closest_cities_new?city=${city}&state=${state}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    scoreData = data;
+                    updateLineChart();
+                })
+                .catch(error => console.error('错误:', error));
+        }
+
+        function updateBarChart() {
+            if (barChart) {
+                barChart.destroy(); // 销毁旧的条形图实例
+            }
+
+            const pageData = totalData.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+            const ctx = document.getElementById('barChart').getContext('2d');
+            barChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: pageData.map(item => item.city),
+                    datasets: [{
+                        label: 'Distance to' + document.getElementById('city').value,
+                        data: pageData.map(item => item.distance),
+                        backgroundColor: 'rgba(0, 123, 255, 0.5)'
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    responsive: false,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function updateLineChart() {
+            if (lineChart) {
+                lineChart.destroy(); // 销毁旧的折线图实例
+            }
+
+            const pageData = scoreData.slice(currentPage * scorePageSize, (currentPage + 1) * scorePageSize);
+            const ctx = document.getElementById('lineChart').getContext('2d');
+            lineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: pageData.map(item => item.city),
+                    datasets: [{
+                        label: 'Average Score for ' + document.getElementById('city').value,
+                        data: pageData.map(item => item.score),
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    responsive: false,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function previousPage() {
+            if (currentPage > 0) {
+                currentPage--;
+                updateBarChart();
+                updateLineChart();
+            }
+        }
+
+        function nextPage() {
+            if ((currentPage + 1) * pageSize < totalData.length) {
+                currentPage++;
+                updateBarChart();
+            }
+            if ((currentPage + 1) * scorePageSize < scoreData.length) {
+                updateLineChart();
+            }
+        }
+
+        function fetchData_12() {
+            const classes = document.getElementById('num_classes_12').value;
+            const k = document.getElementById('k_12').value;
+            const words = document.getElementById('words_12').value;
+
+            const apiUrl = `http://127.0.0.1:5000/stat/knn_reviews?classes=${classes}&k=${k}&words=${words}`;
+            const startTime = performance.now();
+
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const endTime = performance.now();
+                    {#document.getElementById('currentTime_12').innerText = `Response Time: ${endTime - startTime} ms`;#}
+                    createPieChart(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    document.getElementById('result').innerHTML = 'Error fetching data';
+                });
+        }
+
+        function createPieChart(data) {
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            if (pieChart) {
+                pieChart.destroy();
+            }
+
+
+            pieChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.clusters.map(cluster => cluster.center_city),
+                    datasets: [{
+                        data: data.clusters.map(cluster => cluster.total_population),
+                        all: data.clusters.map(cluster => cluster),
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.2)',
+                            'rgba(54, 162, 235, 0.2)',
+                            'rgba(255, 206, 86, 0.2)',
+                            'rgba(75, 192, 192, 0.2)',
+                            'rgba(153, 102, 255, 0.2)',
+                            'rgba(255, 159, 64, 0.2)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false
+                }
+            });
+
+            ctx.canvas.onclick = function(evt) {
+                const activePoints = pieChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, false);
+                if (activePoints.length) {
+                const clickedElementIndex = activePoints[0].index;
+                const new_html_data = pieChart.data.datasets[0].all[clickedElementIndex];
+
+                // 填充表单并提交
+                document.getElementById('data').value = JSON.stringify(new_html_data);
+                document.getElementById('postForm').submit();
+        }
+    };
+
+        }
+
+    </script>
+</body>
+</html>
