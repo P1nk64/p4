@@ -57,7 +57,7 @@
         function fetchData() {
             const city = document.getElementById('city').value;
             const state = document.getElementById('state').value;
-            const url = `http://127.0.0.1:5000/stat/closest_cities_new?city=${city}&state=${state}`;
+            const url = `/stat/closest_cities_new?city=${city}&state=${state}`;
 
             const startTime = performance.now();
 
@@ -76,7 +76,7 @@
         function fetchScoreData() {
             const city = document.getElementById('city').value;
             const state = document.getElementById('state').value;
-            const url = `http://127.0.0.1:5000/stat/q11_closest_cities_new?city=${city}&state=${state}`;
+            const url = `/stat/q11_closest_cities_new?city=${city}&state=${state}`;
 
             fetch(url)
                 .then(response => response.json())
@@ -170,7 +170,7 @@
             const k = document.getElementById('k_12').value;
             const words = document.getElementById('words_12').value;
 
-            const apiUrl = `http://127.0.0.1:5000/stat/knn_reviews?classes=${classes}&k=${k}&words=${words}`;
+            const apiUrl = `/stat/knn_reviews?classes=${classes}&k=${k}&words=${words}`;
             const startTime = performance.now();
 
             fetch(apiUrl)
